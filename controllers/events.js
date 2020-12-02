@@ -1,23 +1,27 @@
-module.exports = function(app, models) {
-const moment= require('moment');
-
-    // Index
+//events.js
+module.exports = function (app, models) {
+  // INDEX
     app.get('/', (req, res) => {
-      models.Event.findAll({ order: [['createdAt', 'DESC']] }).then(events => {
-        res.render('events-index', { events: events });
-      })
+      // in root route
+        console.log(req.user)
+        models.Event.findAll({ order: [['createdAt', 'DESC']] }).then(events => {
+            res.render('events-index', { events: events });
+        })
     })
-
-    // Get-New
+    // NEW
     app.get('/events/new', (req, res) => {
-        res.render('events-new', {});
+      res.render('events-new', {});
     })
 
-    // CREATE-POST
+    // CREATE
     app.post('/events', (req, res) => {
+      console.log(req.user)
+
+      req.body.UserId = req.user.id;
+      console.log(req.body)
       models.Event.create(req.body).then(event => {
-          // Redirect to events/:id
-          res.redirect(`/events/${event.id}`)
+        event.setUser(res.locals.currentUser);
+        res.redirect(`/events/${event.id}`)
       }).catch((err) => {
         console.log(err)
       });
@@ -25,15 +29,12 @@ const moment= require('moment');
 
     // SHOW
     app.get('/events/:id', (req, res) => {
-       models.Event.findByPk(req.params.id, { include: [{ model: models.Rsvp }] }).then(event => {
-         let createdAt = event.createdAt;
-         createdAt = moment(createdAt).format('MMMM Do YYYY, h:mm:ss a');
-         event.createdAtFormatted = createdAt;
-         res.render('events-show', { event: event });
-       }).catch((err) => {
-         console.log(err.message);
-       })
-     });
+      models.Event.findByPk(req.params.id, { include: [{ model: models.Rsvp }] }).then(event => {
+          res.render('events-show', { event: event });
+      }).catch((err) => {
+          console.log(err.message);
+      })
+  });
 
     // EDIT
     app.get('/events/:id/edit', (req, res) => {
@@ -66,5 +67,8 @@ const moment= require('moment');
         console.log(err);
       });
     })
+
+
+
 
 }
